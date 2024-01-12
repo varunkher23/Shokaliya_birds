@@ -101,8 +101,8 @@ summary(out.ms, level = "community")
 
 
 prediction_occu = predict(out.ms,cbind(1,habitat))
-hist(prediction_occu$psi.0.samples[,17,1])
-hist(prediction_occu$psi.0.samples[,17,34])
+hist(prediction_occu$psi.0.samples[,17,1]) ### Scrubland
+hist(prediction_occu$psi.0.samples[,17,34]) ### Cropland
 
 prediction_det = predict(out.ms,cbind(1,survey_cov%>%select(Date,Time)%>%unique.data.frame()%>%scale()),type = "detection")
 hist(prediction_det$p.0.samples[,12,10])
