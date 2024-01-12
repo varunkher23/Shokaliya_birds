@@ -3,6 +3,7 @@
 library(tidyverse)
 library(readxl)
 library(spOccupancy)
+library(boot)
 
 data = read.csv("Input/detection_history.csv")
 survey_cov = read_xlsx("Input/survey_covariates.xlsx")%>%
@@ -54,10 +55,10 @@ for (j in 1:nrow(sites)){
   }
 }
 
-det.covs = list(day= hb.day, tod = hb.tod)
-
-habitat = sites$`Land Cover`
+habitat = as.numeric(sites$`Land Cover` == "Scrub")
 occ.covs = data.frame(habitat)
+
+det.covs = list(day= hb.day, tod = hb.tod, habitat = habitat)
 
 data.msom = list(y = y, occ.covs = occ.covs,
                  det.covs= det.covs)
@@ -96,10 +97,12 @@ out.ms <- msPGOcc(occ.formula = ~habitat,
 
 summary(out.ms, level = "community")
 
+#### Predict
+
 
 prediction_occu = predict(out.ms,cbind(1,habitat))
-hist(prediction_occu$psi.0.samples[,12,6])
+hist(prediction_occu$psi.0.samples[,17,1])
+hist(prediction_occu$psi.0.samples[,17,34])
 
 prediction_det = predict(out.ms,cbind(1,survey_cov%>%select(Date,Time)%>%unique.data.frame()%>%scale()),type = "detection")
 hist(prediction_det$p.0.samples[,12,10])
-
