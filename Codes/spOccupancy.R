@@ -116,12 +116,19 @@ richness.ci.width = rich.high - rich.low
 richness = data.frame(median = rich.median,lcl = rich.low, ucl = rich.high, habitat = habitat)%>%unique.data.frame()
 
 
-sp.codes <- unique(Spp$Species)
-curr.sp <- which(sp.codes == 'Coturnix coromandelica')
-curr.sp.psi.samples <- prediction_occu$psi.0.samples[, curr.sp, ]
-curr.sp.occ <- apply(curr.sp.psi.samples, 2, mean)
-curr.sp.occ.lcl <- apply(curr.sp.psi.samples, 2, quantile, 0.025)
-curr.sp.occ.ucl <- apply(curr.sp.psi.samples, 2, quantile, 0.975)
-curr.sp.occ.ci.width = curr.sp.occ.ucl - curr.sp.occ.lcl
-sp.occ = data.frame(occ_median = curr.sp.occ, occ_lcl = curr.sp.occ.lcl, occ_ucl = curr.sp.occ.ucl, curr.sp.ci.width = curr.sp.occ.ci.width,
-                    habitat = habitat)%>%unique.data.frame()
+#### Function to get habitat specific occupancy for species
+get_sp_occupancy <- function(species){
+  curr.sp <- which(Spp$Species == species)
+  curr.sp.psi.samples <- prediction_occu$psi.0.samples[, curr.sp, ]
+  curr.sp.occ <- apply(curr.sp.psi.samples, 2, mean)
+  curr.sp.occ.lcl <- apply(curr.sp.psi.samples, 2, quantile, 0.025)
+  curr.sp.occ.ucl <- apply(curr.sp.psi.samples, 2, quantile, 0.975)
+  curr.sp.occ.ci.width = curr.sp.occ.ucl - curr.sp.occ.lcl
+  sp.occ = data.frame(Species = species,occ_median = curr.sp.occ, occ_lcl = curr.sp.occ.lcl, occ_ucl = curr.sp.occ.ucl, curr.sp.ci.width = curr.sp.occ.ci.width,
+                      habitat = habitat)%>%unique.data.frame()%>%mutate(habitat = ifelse(habitat==as.numeric(1),"Scrub","Crop"))
+  output = list(sp.occ = sp.occ, sp.psi.samples = curr.curr.sp.psi.samples)
+  return(output)
+}
+
+sp_occupancy_temp = get_sp_occupancy(species = 'Coturnix coromandelica')$sp.occ
+
