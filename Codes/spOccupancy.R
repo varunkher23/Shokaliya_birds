@@ -101,8 +101,27 @@ summary(out.ms, level = "community")
 
 
 prediction_occu = predict(out.ms,cbind(1,habitat))
-hist(prediction_occu$psi.0.samples[,17,1]) ### Scrubland
-hist(prediction_occu$psi.0.samples[,17,34]) ### Cropland
+hist(prediction_occu$psi.0.samples[,which(Spp$Species=='Mirafra erythroptera'),1],xlim = c(0,1),col = "yellow") ### Scrubland
+hist(prediction_occu$psi.0.samples[,which(Spp$Species=='Mirafra erythroptera'),34],xlim = c(0,1),col = "green",add=T) ### Cropland
 
 prediction_det = predict(out.ms,cbind(1,survey_cov%>%select(Date,Time)%>%unique.data.frame()%>%scale()),type = "detection")
 hist(prediction_det$p.0.samples[,12,10])
+
+
+rich.samples <- apply(prediction_occu$z.0.samples, c(1, 3), sum)
+rich.median <- apply(rich.samples, 2, median, na.rm = TRUE)
+rich.low <- apply(rich.samples, 2, quantile, 0.025, na.rm = TRUE)
+rich.high <- apply(rich.samples, 2, quantile, 0.975, na.rm = TRUE)
+richness.ci.width = rich.high - rich.low
+richness = data.frame(median = rich.median,lcl = rich.low, ucl = rich.high, habitat = habitat)%>%unique.data.frame()
+
+
+sp.codes <- unique(Spp$Species)
+curr.sp <- which(sp.codes == 'Coturnix coromandelica')
+curr.sp.psi.samples <- prediction_occu$psi.0.samples[, curr.sp, ]
+curr.sp.occ <- apply(curr.sp.psi.samples, 2, mean)
+curr.sp.occ.lcl <- apply(curr.sp.psi.samples, 2, quantile, 0.025)
+curr.sp.occ.ucl <- apply(curr.sp.psi.samples, 2, quantile, 0.975)
+curr.sp.occ.ci.width = curr.sp.occ.ucl - curr.sp.occ.lcl
+sp.occ = data.frame(occ_median = curr.sp.occ, occ_lcl = curr.sp.occ.lcl, occ_ucl = curr.sp.occ.ucl, curr.sp.ci.width = curr.sp.occ.ci.width,
+                    habitat = habitat)%>%unique.data.frame()
