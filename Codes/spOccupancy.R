@@ -83,7 +83,7 @@ ms.priors <- list(beta.comm.normal = list(mean = 0, var = 2.72),
 
 # Approx. run time:  6 min
 out.ms <- msPGOcc(occ.formula = ~habitat, 
-                  det.formula = ~scale(day) + scale(tod), 
+                  det.formula = ~scale(day) + scale(tod) + habitat, 
                   data = data.msom, 
                   inits = ms.inits, 
                   n.samples = 30000, 
@@ -98,15 +98,16 @@ out.ms <- msPGOcc(occ.formula = ~habitat,
 summary(out.ms, level = "community")
 
 #### Predict
-
-
 prediction_occu = predict(out.ms,cbind(1,habitat))
-hist(prediction_occu$psi.0.samples[,which(Spp$Species=='Mirafra erythroptera'),1],xlim = c(0,1),col = "yellow") ### Scrubland
-hist(prediction_occu$psi.0.samples[,which(Spp$Species=='Mirafra erythroptera'),34],xlim = c(0,1),col = "green",add=T) ### Cropland
 
 prediction_det = predict(out.ms,cbind(1,survey_cov%>%select(Date,Time)%>%unique.data.frame()%>%scale()),type = "detection")
-hist(prediction_det$p.0.samples[,12,10])
+prediction_det = predict(out.ms,cbind(1,mean(scale(survey_cov$Date)),mean(scale(survey_cov$Time)),c(1,0)),type = "detection")
 
+species = "Prinia socialis"
+hist(prediction_occu$psi.0.samples[,which(Spp$Species==species),1],xlim = c(0,1),col = "yellow") ### Scrubland
+hist(prediction_occu$psi.0.samples[,which(Spp$Species==species),34],xlim = c(0,1),col = "green",add=T) ### Cropland
+hist(prediction_det$p.0.samples[,which(Spp$Species==species),1],xlim = c(0,1),col = "yellow")
+hist(prediction_det$p.0.samples[,which(Spp$Species==species),2],xlim = c(0,1),col = "green",add=T)
 
 rich.samples <- apply(prediction_occu$z.0.samples, c(1, 3), sum)
 rich.median <- apply(rich.samples, 2, median, na.rm = TRUE)
