@@ -155,7 +155,7 @@ posterior_guildwise = rbind(posterior_guildwise,posterior_guild)
 
 
 library(ggbeeswarm)
-ggplot(posterior_guildwise%>%filter(feeding%in%c("Insectivorous","Granivorous", "Omnivorous")), 
+ggplot(posterior_guildwise%>%filter(feeding%in%c("Insectivorous","Granivorous","Herbivorous", "Omnivorous")), 
        aes(x = Habitat, y = sprich, col = Habitat)) +
   geom_quasirandom()+
   theme_classic()+
