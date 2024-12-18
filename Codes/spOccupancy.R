@@ -127,7 +127,7 @@ get_sp_occupancy <- function(species){
   curr.sp.occ.ci.width = curr.sp.occ.ucl - curr.sp.occ.lcl
   sp.occ = data.frame(Species = species,occ_median = curr.sp.occ, occ_lcl = curr.sp.occ.lcl, occ_ucl = curr.sp.occ.ucl, curr.sp.ci.width = curr.sp.occ.ci.width,
                       habitat = habitat)%>%unique.data.frame()%>%mutate(habitat = ifelse(habitat==as.numeric(1),"Scrub","Crop"))
-  output = list(sp.occ = sp.occ, sp.psi.samples = curr.curr.sp.psi.samples)
+  output = list(sp.occ = sp.occ, sp.psi.samples = curr.sp.psi.samples)
   return(output)
 }
 
