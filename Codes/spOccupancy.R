@@ -18,8 +18,14 @@ sites = read_xlsx("Input/site_covariates.xlsx")
 
 num.samples=data%>%group_by(Site)%>%
   summarise(num.samples=max(Survey))%>%ungroup()
+sp_cov = read_xlsx("Input/species_covariates.xlsx")%>%
+  rename(Species=`Latin Name`)%>%
+  rename(feeding = `Feeding Guild`)
 Spp = data%>%select(Species)%>%unique.data.frame()%>%
-  mutate(Sppcode=row_number())
+  mutate(Sppcode=row_number())%>%
+  left_join(sp_cov)
+
+Spp%>%filter(feeding=="Granivorous")%>%select(Sppcode)%>%unlist%>%as.vector()
 
 y = array(NA,dim = c(nrow(Spp),nrow(sites),max(num.samples$num.samples)))
 dimnames(y)[[1]] <- Spp$Species
@@ -109,12 +115,15 @@ hist(prediction_occu$psi.0.samples[,which(Spp$Species==species),34],xlim = c(0,1
 hist(prediction_det$p.0.samples[,which(Spp$Species==species),1],xlim = c(0,1),col = "yellow")
 hist(prediction_det$p.0.samples[,which(Spp$Species==species),2],xlim = c(0,1),col = "green",add=T)
 
+### Richness
 rich.samples <- apply(prediction_occu$z.0.samples, c(1, 3), sum)
 rich.median <- apply(rich.samples, 2, median, na.rm = TRUE)
 rich.low <- apply(rich.samples, 2, quantile, 0.025, na.rm = TRUE)
 rich.high <- apply(rich.samples, 2, quantile, 0.975, na.rm = TRUE)
 richness.ci.width = rich.high - rich.low
 richness = data.frame(median = rich.median,lcl = rich.low, ucl = rich.high, habitat = habitat)%>%unique.data.frame()
+
+
 
 
 #### Function to get habitat specific occupancy for species
@@ -132,4 +141,24 @@ get_sp_occupancy <- function(species){
 }
 
 sp_occupancy_temp = get_sp_occupancy(species = 'Coturnix coromandelica')$sp.occ
+
+### Guildwise species richness
+
+posterior_guildwise = data.frame() 
+for (i in 1:length(unique(sp_cov$feeding))) {
+guild = Spp%>%filter(feeding==sp_cov$feeding[i])%>%select(Sppcode)%>%unlist%>%as.vector()
+rich.guild = apply(prediction_occu$z.0.samples[,guild,], c(1, 3), sum)
+posterior_guild = rbind(data.frame(sprich = rich.guild[,1],Habitat = "Scrubland",feeding = sp_cov$feeding[i]),
+                            data.frame(sprich = rich.guild[,17],Habitat = "Cropland", feeding = sp_cov$feeding[i]))
+posterior_guildwise = rbind(posterior_guildwise,posterior_guild)
+}
+
+
+library(ggbeeswarm)
+ggplot(posterior_guildwise%>%filter(feeding%in%c("Insectivorous","Granivorous", "Omnivorous")), 
+       aes(x = Habitat, y = sprich, col = Habitat)) +
+  geom_quasirandom()+
+  theme_classic()+
+  ylim(c(0,15))+
+  facet_grid(~feeding)
 
