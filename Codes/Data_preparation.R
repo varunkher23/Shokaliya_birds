@@ -21,5 +21,5 @@ D = data%>%
   left_join(Spp)%>%
   left_join(sites)
 
-write.csv(D,"Input/MSOM_datafile.csv")
+#write.csv(D,"Input/MSOM_datafile.csv")
 

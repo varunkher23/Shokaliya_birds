@@ -103,6 +103,58 @@ out.ms <- msPGOcc(occ.formula = ~habitat,
 
 summary(out.ms, level = "community")
 
+out.ms.0 <- msPGOcc(occ.formula = ~1, 
+                    det.formula = ~1, 
+                    data = data.msom, 
+                    inits = ms.inits, 
+                    n.samples = 30000, 
+                    priors = ms.priors, 
+                    n.omp.threads = 6, 
+                    verbose = TRUE, 
+                    n.report = 6000, 
+                    n.burn = 10000,
+                    n.thin = 50, 
+                    n.chains = 3)
+
+out.ms.1 <- msPGOcc(occ.formula = ~habitat, 
+                  det.formula = ~scale(tod) + habitat, 
+                  data = data.msom, 
+                  inits = ms.inits, 
+                  n.samples = 30000, 
+                  priors = ms.priors, 
+                  n.omp.threads = 6, 
+                  verbose = TRUE, 
+                  n.report = 6000, 
+                  n.burn = 10000,
+                  n.thin = 50, 
+                  n.chains = 3)
+
+out.ms.2 <- msPGOcc(occ.formula = ~habitat, 
+                    det.formula = ~habitat, 
+                    data = data.msom, 
+                    inits = ms.inits, 
+                    n.samples = 30000, 
+                    priors = ms.priors, 
+                    n.omp.threads = 6, 
+                    verbose = TRUE, 
+                    n.report = 6000, 
+                    n.burn = 10000,
+                    n.thin = 50, 
+                    n.chains = 3)
+
+out.ms.2 <- msPGOcc(occ.formula = ~habitat, 
+                    det.formula = ~1, 
+                    data = data.msom, 
+                    inits = ms.inits, 
+                    n.samples = 30000, 
+                    priors = ms.priors, 
+                    n.omp.threads = 6, 
+                    verbose = TRUE, 
+                    n.report = 6000, 
+                    n.burn = 10000,
+                    n.thin = 50, 
+                    n.chains = 3)
+
 #### Predict
 prediction_occu = predict(out.ms,cbind(1,habitat))
 
@@ -144,13 +196,14 @@ sp_occupancy_temp = get_sp_occupancy(species = 'Coturnix coromandelica')$sp.occ
 
 ### Guildwise species richness
 
-posterior_guildwise = data.frame() 
-for (i in 1:length(unique(sp_cov$feeding))) {
-guild = Spp%>%filter(feeding==sp_cov$feeding[i])%>%select(Sppcode)%>%unlist%>%as.vector()
-rich.guild = apply(prediction_occu$z.0.samples[,guild,], c(1, 3), sum)
-posterior_guild = rbind(data.frame(sprich = rich.guild[,1],Habitat = "Scrubland",feeding = sp_cov$feeding[i]),
-                            data.frame(sprich = rich.guild[,17],Habitat = "Cropland", feeding = sp_cov$feeding[i]))
-posterior_guildwise = rbind(posterior_guildwise,posterior_guild)
+posterior_guildwise = data.frame()
+sp_cov2 = sp_cov%>%filter(feeding != "Nectarivorous")
+for (i in 1:length(unique(sp_cov2$feeding))) {
+  guild = Spp%>%filter(feeding==unique(sp_cov2$feeding)[i])%>%select(Sppcode)%>%unlist%>%as.vector()
+  rich.guild = apply(prediction_occu$z.0.samples[,guild,], c(1, 3), sum)
+  posterior_guild = rbind(data.frame(sprich = rich.guild[,1],Habitat = "Scrubland",feeding = unique(sp_cov2$feeding)[i]),
+                              data.frame(sprich = rich.guild[,17],Habitat = "Cropland", feeding = unique(sp_cov2$feeding)[i]))
+  posterior_guildwise = rbind(posterior_guildwise,posterior_guild)
 }
 
 
@@ -158,7 +211,7 @@ library(ggbeeswarm)
 ggplot(posterior_guildwise%>%filter(feeding%in%c("Insectivorous","Granivorous","Herbivorous", "Omnivorous")), 
        aes(x = Habitat, y = sprich, col = Habitat)) +
   geom_quasirandom()+
-  theme_classic()+
+  theme_minimal()+
   ylim(c(0,15))+
   facet_grid(~feeding)
 
